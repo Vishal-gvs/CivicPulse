@@ -36,7 +36,9 @@ app.use(limiter);
 
 // CORS configuration
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
+  origin: process.env.ALLOWED_ORIGINS 
+    ? process.env.ALLOWED_ORIGINS.split(',') 
+    : ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5173', 'http://127.0.0.1:5173'],
   credentials: true
 }));
 
@@ -57,7 +59,7 @@ app.use('/api/issues', issueRoutes);
 app.use('/api/feedback', feedbackRoutes);
 app.use('/api/analytics', analyticsRoutes);
 
-// Health check endpoint
+// API Root / Health check endpoint
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({
     status: 'OK',
@@ -66,23 +68,12 @@ app.get('/api/health', (req: Request, res: Response) => {
   });
 });
 
-// Serve frontend in production
-if (process.env.NODE_ENV === 'production') {
-  const frontendPath = path.join(__dirname, '../../Frontend/dist');
-  app.use(express.static(frontendPath));
-  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+app.get('/', (req: Request, res: Response) => {
+  res.json({ message: 'CivicPulse Backend API is online. Please use /api prefix.' });
+});
 
-  app.get('*', (req: Request, res: Response) => {
-    res.sendFile(path.join(frontendPath, 'index.html'));
-  });
-} else {
-  // Serve static files in development
-  app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-  
-  app.get('/', (req: Request, res: Response) => {
-    res.send('CivicPulse API is running in development mode. Use the frontend dev server for UI.');
-  });
-}
+// Serve static files (uploads only)
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Error handling middleware
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
@@ -115,5 +106,4 @@ const server = app.listen(PORT, HOST, () => {
   const bind = typeof address === 'string' ? `pipe ${address}` : `port ${address?.port}`;
   console.log(`🚀 CivicPulse server running on ${HOST}:${PORT} (${bind})`);
   console.log(`📊 Health check: http://127.0.0.1:${PORT}/api/health`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
