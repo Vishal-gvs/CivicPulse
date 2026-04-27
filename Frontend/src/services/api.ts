@@ -4,7 +4,7 @@ import axios, { AxiosResponse } from 'axios';
 const USE_MOCK_API = false; // ✅ Switch to real backend
 
 const API = axios.create({
-  baseURL: "/api", // Relying on Vite proxy to route to http://localhost:5000/api
+  baseURL: import.meta.env.VITE_API_URL || "/api", // Use env var in production, rely on Vite proxy locally
   headers: {
     "Content-Type": "application/json",
   },
