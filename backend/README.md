@@ -6,14 +6,14 @@ A comprehensive backend API for the Civic Issue Tracker application built with N
 
 ### 🔐 Authentication & Authorization
 - JWT-based authentication
-- Role-based access control (Citizen, Authority, Admin)
-- Email domain validation (@gmail.com, @gov.in, @admin.com)
-- Authority approval workflow
+- Role-based access control (Citizen, Manager, Admin)
+- Email domain validation (@gmail.com, @manager.com, @admin.com)
+- Manager approval workflow
 - Password hashing with bcrypt
 
 ### 👥 User Management
 - Multi-role user system
-- Admin approval for authority accounts
+- Admin approval for manager accounts
 - User profile management
 - Account status tracking (active, pending, rejected)
 
@@ -23,7 +23,7 @@ A comprehensive backend API for the Civic Issue Tracker application built with N
 - Issue categorization and priority
 - Voting system for issues
 - Comments and discussions
-- Assignment to authorities
+- Assignment to managers
 
 ### 📊 Analytics & Reporting
 - Comprehensive system analytics
@@ -119,9 +119,9 @@ npm start
 
 ### Users
 - `GET /api/users` - Get all users (admin only)
-- `GET /api/users/pending-authorities` - Get pending authorities (admin only)
-- `PUT /api/users/:id/approve` - Approve authority (admin only)
-- `PUT /api/users/:id/reject` - Reject authority (admin only)
+- `GET /api/users/pending-managers` - Get pending managers (admin only)
+- `PUT /api/users/:id/approve` - Approve manager (admin only)
+- `PUT /api/users/:id/reject` - Reject manager (admin only)
 - `GET /api/users/:id` - Get user by ID
 - `PUT /api/users/:id` - Update user profile
 - `DELETE /api/users/:id` - Delete user (admin only)
@@ -130,7 +130,7 @@ npm start
 - `GET /api/issues` - Get all issues with filtering
 - `GET /api/issues/:id` - Get single issue
 - `POST /api/issues` - Create new issue (citizen only)
-- `PUT /api/issues/:id` - Update issue (authority/admin only)
+- `PUT /api/issues/:id` - Update issue (manager/admin only)
 - `POST /api/issues/:id/vote` - Vote for issue
 - `DELETE /api/issues/:id/vote` - Remove vote
 - `POST /api/issues/:id/comments` - Add comment
@@ -199,7 +199,7 @@ The system enforces specific email domains for each role:
   name: String,
   email: String,
   password: String,
-  role: ['citizen', 'authority', 'admin'],
+  role: ['citizen', 'manager', 'admin'],
   status: ['active', 'pending', 'rejected'],
   phone: String,
   address: String,

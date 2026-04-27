@@ -6,7 +6,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password?: string;
-  role: 'citizen' | 'authority' | 'admin' | 'manager';
+  role: 'citizen' | 'admin' | 'manager';
   status: 'active' | 'pending' | 'rejected';
   phone?: string;
   address?: string;
@@ -44,7 +44,7 @@ const userSchema = new Schema<IUser, UserModel>({
   },
   role: {
     type: String,
-    enum: ['citizen', 'authority', 'admin', 'manager'],
+    enum: ['citizen', 'admin', 'manager'],
     required: [true, 'Role is required'],
     default: 'citizen'
   },

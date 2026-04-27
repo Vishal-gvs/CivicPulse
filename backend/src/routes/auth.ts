@@ -23,7 +23,7 @@ router.post('/register', [
   body('name').trim().isLength({ min: 2, max: 50 }).withMessage('Name must be between 2 and 50 characters'),
   body('email').isEmail().normalizeEmail().withMessage('Please provide a valid email'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('role').isIn(['citizen', 'authority', 'admin', 'manager']).withMessage('Invalid role specified')
+  body('role').isIn(['citizen', 'admin', 'manager']).withMessage('Invalid role specified')
 ], async (req: AuthRequest, res: any) => {
   try {
     // Check for validation errors
@@ -60,9 +60,9 @@ router.post('/register', [
 
     // Set status based on role:
     // - admin: active immediately (verified via secret code)
-    // - authority / manager: pending admin approval
+    // - manager: pending admin approval
     // - citizen: active immediately
-    const status = (role === 'authority' || role === 'manager') ? 'pending' : 'active';
+    const status = (role === 'manager') ? 'pending' : 'active';
 
     // Create user
     const user = await User.create({
@@ -136,18 +136,17 @@ router.post('/login', [
       });
     }
 
-    // Check if authority or manager is approved
-    if ((user.role === 'authority' || user.role === 'manager') && user.status !== 'active') {
-      const roleLabel = user.role === 'manager' ? 'manager' : 'authority';
+    // Check if manager is approved
+    if (user.role === 'manager' && user.status !== 'active') {
       if (user.status === 'pending') {
         return res.status(401).json({
           success: false,
-          message: `Your ${roleLabel} account is pending approval. Please wait for admin approval.`
+          message: `Your manager account is pending approval. Please wait for admin approval.`
         });
       } else if (user.status === 'rejected') {
         return res.status(401).json({
           success: false,
-          message: `Your ${roleLabel} account has been rejected. Please contact admin.`
+          message: `Your manager account has been rejected. Please contact admin.`
         });
       }
     }

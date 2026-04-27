@@ -27,7 +27,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: any) => {
     ]);
 
     const totalUsers = await User.countDocuments({ status: 'active' });
-    const pendingAuthorities = await User.countDocuments({ role: 'authority', status: 'pending' });
+    const pendingManagers = await User.countDocuments({ role: 'manager', status: 'pending' });
 
     // Get issue statistics
     const issueStats = await Issue.aggregate([
@@ -138,7 +138,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: any) => {
     const analytics = {
       users: {
         total: totalUsers,
-        pendingAuthorities,
+        pendingManagers,
         breakdown: userStats.reduce((acc, stat) => {
           acc[stat._id] = stat.count;
           return acc;
@@ -193,7 +193,7 @@ router.get('/', authenticate, async (req: AuthRequest, res: any) => {
 });
 
 // @route   GET /api/analytics/user
-// @desc    Get user-specific analytics (for citizens and authorities)
+// @desc    Get user-specific analytics (for citizens and managers)
 // @access  Private
 router.get('/user', authenticate, async (req: AuthRequest, res: any) => {
   try {
@@ -226,19 +226,19 @@ router.get('/user', authenticate, async (req: AuthRequest, res: any) => {
           total: totalFeedback
         }
       };
-    } else if (userRole === 'authority') {
-      // Authority analytics
+    } else if (userRole === 'manager') {
+      // Manager analytics
       const allIssues = await Issue.find();
       const totalIssues = allIssues.length;
       const resolvedIssues = allIssues.filter(issue => issue.status === 'resolved').length;
       const openIssues = allIssues.filter(issue => issue.status === 'open').length;
       const inProgressIssues = allIssues.filter(issue => issue.status === 'in-progress').length;
 
-      // Get issues assigned to this authority
+      // Get issues assigned to this manager
       const assignedIssues = await Issue.find({ assignedTo: userId });
       const assignedCount = assignedIssues.length;
 
-      // Get feedback related to issues handled by this authority
+      // Get feedback related to issues handled by this manager
       const feedbackStats = await Feedback.aggregate([
         {
           $lookup: {
@@ -313,8 +313,8 @@ router.get('/dashboard', authenticate, async (req: AuthRequest, res: any) => {
         inProgressIssues: userIssues.filter(issue => issue.status === 'in-progress').length,
         resolvedIssues: userIssues.filter(issue => issue.status === 'resolved').length
       };
-    } else if (userRole === 'authority') {
-      // Authority dashboard stats
+    } else if (userRole === 'manager') {
+      // Manager dashboard stats
       const allIssues = await Issue.find();
       stats = {
         totalIssues: allIssues.length,

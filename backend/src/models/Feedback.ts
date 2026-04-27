@@ -12,6 +12,9 @@ export interface IFeedback extends Document {
   adminResponse?: string;
   reviewedAt?: Date;
   addressedAt?: Date;
+  likes: Types.ObjectId[];
+  dislikes: Types.ObjectId[];
+  isStarred: boolean;
   markAsReviewed(adminResponse?: string): Promise<this>;
   markAsAddressed(): Promise<this>;
 }
@@ -67,6 +70,18 @@ const feedbackSchema = new Schema<IFeedback>({
   addressedAt: {
     type: Date,
     default: null
+  },
+  likes: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  dislikes: [{
+    type: Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  isStarred: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

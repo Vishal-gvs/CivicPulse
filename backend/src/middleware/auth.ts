@@ -99,15 +99,6 @@ export const validateEmailDomain = (req: Request, res: Response, next: NextFunct
       }
       break;
       
-    case 'authority':
-      if (!emailLower.endsWith('@gov.in')) {
-        return res.status(400).json({
-          success: false,
-          message: 'Authority accounts must use @gov.in email domain. Please use your official government email.'
-        });
-      }
-      break;
-      
     case 'admin':
       if (!emailLower.endsWith('@admin.com')) {
         return res.status(400).json({
@@ -118,10 +109,10 @@ export const validateEmailDomain = (req: Request, res: Response, next: NextFunct
       break;
       
     case 'manager':
-      if (!emailLower.endsWith('@manager.com')) {
+      if (!emailLower.endsWith('@manager.com') && !emailLower.endsWith('@gov.in')) {
         return res.status(400).json({
           success: false,
-          message: 'Manager accounts must use @manager.com email domain.'
+          message: 'Manager accounts must use @manager.com or @gov.in email domain.'
         });
       }
       break;

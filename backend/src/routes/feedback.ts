@@ -9,7 +9,7 @@ import { authenticate, authorize, validateEmailDomain } from '../middleware/auth
 const router = express.Router();
 
 // @route   GET /api/feedback
-// @desc    Get all feedback (admin/authority see all; citizens see only their own)
+// @desc    Get all feedback (admin/manager see all; citizens see only their own)
 // @access  Private
 router.get('/', authenticate, async (req: AuthRequest, res: any) => {
   try {
@@ -22,11 +22,10 @@ router.get('/', authenticate, async (req: AuthRequest, res: any) => {
       search
     } = req.query;
 
-    // Build filter — citizens only see their own feedback
+    // Build filter
     const filter = {};
-    if (req.user.role === 'citizen') {
-      filter.user = req.user._id;
-    }
+    // Removed role-based restriction so feedback is universal
+    if (category) filter.category = category;
     if (category) filter.category = category;
     if (rating) filter.rating = parseInt(rating);
     if (status) filter.status = status;
@@ -68,8 +67,8 @@ router.get('/', authenticate, async (req: AuthRequest, res: any) => {
 
 // @route   GET /api/feedback/analytics
 // @desc    Get feedback analytics
-// @access  Private/Admin/Authority
-router.get('/analytics', authenticate, authorize('admin', 'authority'), async (req: AuthRequest, res: any) => {
+// @access  Private/Admin/Manager
+router.get('/analytics', authenticate, authorize('admin', 'manager'), async (req: AuthRequest, res: any) => {
   try {
     const analytics = await Feedback.aggregate([
       {
@@ -216,8 +215,8 @@ router.post('/', [
 
 // @route   GET /api/feedback/:id
 // @desc    Get single feedback by ID
-// @access  Private/Admin/Authority
-router.get('/:id', authenticate, authorize('admin', 'authority'), async (req: AuthRequest, res: any) => {
+// @access  Private/Admin/Manager
+router.get('/:id', authenticate, authorize('admin', 'manager'), async (req: AuthRequest, res: any) => {
   try {
     const feedback = await Feedback.findById(req.params.id)
       .populate('user', 'name email')
@@ -244,11 +243,11 @@ router.get('/:id', authenticate, authorize('admin', 'authority'), async (req: Au
 });
 
 // @route   PUT /api/feedback/:id/review
-// @desc    Mark feedback as reviewed (admin/authority only)
-// @access  Private/Admin/Authority
+// @desc    Mark feedback as reviewed (admin/manager only)
+// @access  Private/Admin/Manager
 router.put('/:id/review', [
   authenticate,
-  authorize('admin', 'authority'),
+  authorize('admin', 'manager'),
   body('adminResponse').optional().trim().isLength({ max: 1000 }).withMessage('Admin response cannot exceed 1000 characters')
 ], async (req: AuthRequest, res: any) => {
   try {
@@ -353,6 +352,102 @@ router.delete('/:id', authenticate, authorize('admin'), async (req: AuthRequest,
       success: false,
       message: 'Server error while deleting feedback'
     });
+  }
+});
+
+// @route   PUT /api/feedback/:id/like
+// @desc    Toggle like on a feedback
+// @access  Private
+router.put('/:id/like', authenticate, async (req: AuthRequest, res: any) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ success: false, message: 'Feedback not found' });
+    }
+
+    const userId = req.user._id;
+    
+    // Remove from dislikes if exists
+    feedback.dislikes = feedback.dislikes.filter(id => id.toString() !== userId.toString());
+    
+    // Toggle like
+    const likeIndex = feedback.likes.findIndex(id => id.toString() === userId.toString());
+    if (likeIndex > -1) {
+      feedback.likes.splice(likeIndex, 1);
+    } else {
+      feedback.likes.push(userId);
+    }
+    
+    await feedback.save();
+    
+    const updatedFeedback = await Feedback.findById(feedback._id)
+      .populate('user', 'name email')
+      .populate('issue', 'title');
+      
+    res.json({ success: true, data: updatedFeedback });
+  } catch (error) {
+    console.error('Like feedback error:', error);
+    res.status(500).json({ success: false, message: 'Server error while liking feedback' });
+  }
+});
+
+// @route   PUT /api/feedback/:id/dislike
+// @desc    Toggle dislike on a feedback
+// @access  Private
+router.put('/:id/dislike', authenticate, async (req: AuthRequest, res: any) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ success: false, message: 'Feedback not found' });
+    }
+
+    const userId = req.user._id;
+    
+    // Remove from likes if exists
+    feedback.likes = feedback.likes.filter(id => id.toString() !== userId.toString());
+    
+    // Toggle dislike
+    const dislikeIndex = feedback.dislikes.findIndex(id => id.toString() === userId.toString());
+    if (dislikeIndex > -1) {
+      feedback.dislikes.splice(dislikeIndex, 1);
+    } else {
+      feedback.dislikes.push(userId);
+    }
+    
+    await feedback.save();
+    
+    const updatedFeedback = await Feedback.findById(feedback._id)
+      .populate('user', 'name email')
+      .populate('issue', 'title');
+      
+    res.json({ success: true, data: updatedFeedback });
+  } catch (error) {
+    console.error('Dislike feedback error:', error);
+    res.status(500).json({ success: false, message: 'Server error while disliking feedback' });
+  }
+});
+
+// @route   PUT /api/feedback/:id/star
+// @desc    Toggle star status of a feedback (Manager/Admin only)
+// @access  Private/Admin/Manager
+router.put('/:id/star', authenticate, authorize('admin', 'manager'), async (req: AuthRequest, res: any) => {
+  try {
+    const feedback = await Feedback.findById(req.params.id);
+    if (!feedback) {
+      return res.status(404).json({ success: false, message: 'Feedback not found' });
+    }
+
+    feedback.isStarred = !feedback.isStarred;
+    await feedback.save();
+    
+    const updatedFeedback = await Feedback.findById(feedback._id)
+      .populate('user', 'name email')
+      .populate('issue', 'title');
+      
+    res.json({ success: true, data: updatedFeedback });
+  } catch (error) {
+    console.error('Star feedback error:', error);
+    res.status(500).json({ success: false, message: 'Server error while starring feedback' });
   }
 });
 

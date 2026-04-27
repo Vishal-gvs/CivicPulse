@@ -55,29 +55,6 @@ router.get('/', authenticate, authorize('admin'), async (req: AuthRequest, res: 
   }
 });
 
-// @route   GET /api/users/pending-authorities
-// @desc    Get pending authority accounts (admin only)
-// @access  Private/Admin
-router.get('/pending-authorities', authenticate, authorize('admin'), async (req: AuthRequest, res: any) => {
-  try {
-    const pendingAuthorities = await User.find({
-      role: 'authority',
-      status: 'pending'
-    }).select('-password').sort({ createdAt: -1 });
-
-    res.json({
-      success: true,
-      data: pendingAuthorities
-    });
-  } catch (error) {
-    console.error('Get pending authorities error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Server error while fetching pending authorities'
-    });
-  }
-});
-
 // @route   GET /api/users/pending-managers
 // @desc    Get pending manager accounts (admin only)
 // @access  Private/Admin
@@ -104,7 +81,7 @@ router.get('/pending-managers', authenticate, authorize('admin'), async (req: Au
 
 
 // @route   PUT /api/users/:id/approve
-// @desc    Approve authority account (admin only)
+// @desc    Approve manager account (admin only)
 // @access  Private/Admin
 router.put('/:id/approve', authenticate, authorize('admin'), async (req: AuthRequest, res: any) => {
   try {
@@ -117,10 +94,10 @@ router.put('/:id/approve', authenticate, authorize('admin'), async (req: AuthReq
       });
     }
 
-    if (user.role !== 'authority' && user.role !== 'manager') {
+    if (user.role !== 'manager') {
       return res.status(400).json({
         success: false,
-        message: 'Only authority and manager accounts can be approved'
+        message: 'Only manager accounts can be approved'
       });
     }
 
@@ -137,19 +114,19 @@ router.put('/:id/approve', authenticate, authorize('admin'), async (req: AuthReq
     res.json({
       success: true,
       data: user.getPublicProfile(),
-      message: `${user.role === 'authority' ? 'Authority' : 'Manager'} account approved successfully`
+      message: `Manager account approved successfully`
     });
   } catch (error) {
-    console.error('Approve authority error:', error);
+    console.error('Approve manager error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while approving authority'
+      message: 'Server error while approving manager'
     });
   }
 });
 
 // @route   PUT /api/users/:id/reject
-// @desc    Reject authority account (admin only)
+// @desc    Reject manager account (admin only)
 // @access  Private/Admin
 router.put('/:id/reject', authenticate, authorize('admin'), async (req: AuthRequest, res: any) => {
   try {
@@ -162,10 +139,10 @@ router.put('/:id/reject', authenticate, authorize('admin'), async (req: AuthRequ
       });
     }
 
-    if (user.role !== 'authority' && user.role !== 'manager') {
+    if (user.role !== 'manager') {
       return res.status(400).json({
         success: false,
-        message: 'Only authority and manager accounts can be rejected'
+        message: 'Only manager accounts can be rejected'
       });
     }
 
@@ -182,13 +159,13 @@ router.put('/:id/reject', authenticate, authorize('admin'), async (req: AuthRequ
     res.json({
       success: true,
       data: user.getPublicProfile(),
-      message: `${user.role === 'authority' ? 'Authority' : 'Manager'} account rejected successfully`
+      message: `Manager account rejected successfully`
     });
   } catch (error) {
-    console.error('Reject authority error:', error);
+    console.error('Reject manager error:', error);
     res.status(500).json({
       success: false,
-      message: 'Server error while rejecting authority'
+      message: 'Server error while rejecting manager'
     });
   }
 });

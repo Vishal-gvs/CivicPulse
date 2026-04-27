@@ -49,8 +49,8 @@ router.get('/', authenticate, async (req: AuthRequest, res: any) => {
     if (req.user.role === 'citizen') {
       // Citizens can only see their own issues
       filter.reportedBy = req.user._id;
-    } else if (req.user.role === 'authority' || req.user.role === 'admin' || req.user.role === 'manager') {
-      // Authorities, managers (if active) and admins can see all issues
+    } else if (req.user.role === 'admin' || req.user.role === 'manager') {
+      // Managers (if active) and admins can see all issues
       // No filter needed
     }
 
@@ -203,10 +203,10 @@ router.post('/', [
 
 // @route   PUT /api/issues/:id
 // @desc    Update issue
-// @access  Private/Authority/Admin
+// @access  Private/Manager/Admin
 router.put('/:id', [
   authenticate,
-  authorize('authority', 'admin'),
+  authorize('manager', 'admin'),
   body('status').optional().isIn(['open', 'in-progress', 'resolved']).withMessage('Invalid status'),
   body('priority').optional().isIn(['low', 'medium', 'high', 'urgent']).withMessage('Invalid priority'),
   body('assignedTo').optional().isMongoId().withMessage('Invalid assigned user ID')
