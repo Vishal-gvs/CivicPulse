@@ -47,10 +47,14 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// Create uploads directory if it doesn't exist
+// Create uploads directory if it doesn't exist (wrap in try-catch for read-only environments like Vercel)
 const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
+try {
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+} catch (error: any) {
+  console.warn('⚠️ Could not create uploads directory (this is expected in Vercel/serverless environments):', error.message);
 }
 
 // Routes
