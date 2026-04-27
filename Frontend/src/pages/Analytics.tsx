@@ -1,6 +1,8 @@
 // @ts-nocheck
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useAuth } from '../context/AuthContext';
+import { Link } from '@tanstack/react-router';
 import { getAnalytics, parseAnalyticsResponse } from '../services/api';
 import { 
   BarChart, 
@@ -33,6 +35,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 
 const Analytics = () => {
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
+
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['analytics'],
     queryFn: async () => {
@@ -40,7 +44,36 @@ const Analytics = () => {
       return parseAnalyticsResponse(res);
     },
     refetchInterval: 30000, // Refresh every 30 seconds for "real-time" feel
+    enabled: !!(isAuthenticated && user?.role === 'admin'),
   });
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <p className="text-muted-foreground font-medium">Verifying access...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/30">
+        <Card className="max-w-md w-full border-border shadow-card p-8 text-center space-y-6">
+          <AlertCircle className="w-16 h-16 mx-auto text-destructive" />
+          <h2 className="text-2xl font-bold font-display">Access Denied</h2>
+          <p className="text-muted-foreground">This page is restricted to administrators only.</p>
+          <div className="pt-4">
+            <Link to="/" className="px-6 py-2.5 bg-primary text-white font-bold rounded-lg hover:bg-primary/90 transition-colors w-full inline-block">
+              Go to Home
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   if (isLoading) return <AnalyticsLoading />;
   if (error) return <AnalyticsError retry={refetch} />;
@@ -76,26 +109,26 @@ const Analytics = () => {
   return (
     <div className="min-h-screen bg-muted/20 pb-12">
       {/* Header */}
-      <div className="bg-gradient-amber text-white border-b shadow-sm">
+      <div className="bg-gradient-amber text-slate-900 border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-3xl md:text-5xl font-bold font-display tracking-tight flex items-center gap-3">
+              <h1 className="text-3xl md:text-5xl font-bold font-display tracking-tight flex items-center gap-3 text-slate-900">
                 <TrendingUp className="w-8 h-8 md:w-10 md:h-10 opacity-80" /> Project Infographics
               </h1>
-              <p className="text-white/80 mt-2 text-lg max-w-2xl font-sans">
+              <p className="text-slate-300 mt-2 text-lg max-w-2xl font-sans">
                 Real-time data visualization of the CivicPulse platform's impact and community engagement.
               </p>
             </div>
-            <div className="flex items-center gap-2 bg-black/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 text-sm font-medium">
-              <Activity className="w-4 h-4 text-green-400 animate-pulse" />
+            <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full border border-slate-900/10 text-sm font-medium text-slate-900">
+              <Activity className="w-4 h-4 text-emerald-600 animate-pulse" />
               Live System Status
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 space-y-8">
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <StatCard title="Total Citizens" value={data.users?.total || 0} icon={<Users className="w-5 h-5" />} trend="+4.2%" color="blue" />

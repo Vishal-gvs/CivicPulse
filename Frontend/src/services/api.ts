@@ -38,13 +38,7 @@ export const parseUsersListResponse = (axiosResponse: any) => {
   return [];
 };
 
-/** GET /api/users/pending-authorities — body is { data: User[] }. */
-export const parsePendingAuthoritiesResponse = (axiosResponse: any) => {
-  const body = axiosResponse?.data;
-  if (Array.isArray(body?.data)) return body.data;
-  if (Array.isArray(body)) return body;
-  return [];
-};
+
 
 /** GET /api/users/pending-managers — body is { data: User[] }. */
 export const parsePendingManagersResponse = (axiosResponse: any) => {
@@ -102,13 +96,13 @@ export const getPendingResolveRequests = () =>
 // Feedback APIs - Using Real Backend
 export const getFeedback = () => API.get("/feedback");
 export const createFeedback = (feedbackData: any) => API.post("/feedback", feedbackData);
+export const likeFeedback = (id: string) => API.put(`/feedback/${id}/like`);
+export const dislikeFeedback = (id: string) => API.put(`/feedback/${id}/dislike`);
+export const starFeedback = (id: string) => API.put(`/feedback/${id}/star`);
 
 // User APIs - Using Real Backend
 export const getUsers = () => API.get("/users");
-export const getPendingAuthorities = () => API.get("/users/pending-authorities");
 export const getPendingManagers = () => API.get("/users/pending-managers");
-export const approveAuthority = (id: string) => API.put(`/users/${id}/approve`);
-export const rejectAuthority = (id: string) => API.put(`/users/${id}/reject`);
 export const approveManager = (id: string) => API.put(`/users/${id}/approve`);
 export const rejectManager = (id: string) => API.put(`/users/${id}/reject`);
 

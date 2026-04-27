@@ -5,7 +5,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
-  role: 'citizen' | 'authority' | 'admin';
+  role: 'citizen' | 'admin' | 'manager';
   status: 'active' | 'pending' | 'rejected';
   phone?: string;
   address?: string;

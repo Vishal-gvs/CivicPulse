@@ -127,7 +127,7 @@
   .shadow-premium {
     box-shadow: 0 10px 30px -10px oklch(var(--primary) / 0.15);
   }
-  .gradient-amber {
+  .bg-gradient-amber {
     background: linear-gradient(135deg, oklch(0.72 0.18 55), oklch(0.62 0.16 40));
   }
   .text-gradient-amber {

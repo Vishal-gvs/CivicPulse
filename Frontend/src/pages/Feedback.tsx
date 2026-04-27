@@ -1,20 +1,21 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { createFeedback, getFeedback } from '../services/api';
+import { createFeedback, getFeedback, getIssues, parseIssuesFromResponse, likeFeedback, dislikeFeedback, starFeedback } from '../services/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageSquare, Star, CheckCircle, SearchCode } from 'lucide-react';
+import { MessageSquare, Star as StarIcon, CheckCircle, SearchCode, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { toast } from 'sonner';
 
 const Feedback = () => {
   const { user } = useAuth();
   const [feedbacks, setFeedbacks] = useState([]);
-  const [formData, setFormData] = useState({ message: '', category: 'general', rating: 5 });
+  const [myIssues, setMyIssues] = useState([]);
+  const [formData, setFormData] = useState({ message: '', category: 'general', rating: 5, issueId: 'none' });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
 
@@ -29,7 +30,10 @@ const Feedback = () => {
 
   useEffect(() => {
     fetchFeedbacks();
-  }, []);
+    if (user?.role === 'citizen') {
+      fetchMyIssues();
+    }
+  }, [user]);
 
   const fetchFeedbacks = async () => {
     try {
@@ -37,6 +41,16 @@ const Feedback = () => {
       setFeedbacks(response.data || []);
     } catch (error) {
       console.error('Failed to fetch feedbacks:', error);
+    }
+  };
+
+  const fetchMyIssues = async () => {
+    try {
+      if (!user?._id) return;
+      const response = await getIssues(user._id, user.role);
+      setMyIssues(parseIssuesFromResponse(response));
+    } catch (error) {
+      console.error('Failed to fetch issues:', error);
     }
   };
 
@@ -48,6 +62,10 @@ const Feedback = () => {
 
   const handleSelectChange = (value) => {
     setFormData(prev => ({ ...prev, category: value }));
+  };
+
+  const handleIssueSelectChange = (value) => {
+    setFormData(prev => ({ ...prev, issueId: value }));
   };
 
   const handleRatingChange = (rating) => {
@@ -69,17 +87,89 @@ const Feedback = () => {
     
     setIsLoading(true);
     try {
-      const feedbackData = { ...formData, userId: user._id, userName: user.name };
+      const feedbackData = { 
+        ...formData, 
+        userId: user._id, 
+        userName: user.name,
+        issueId: formData.issueId === 'none' ? undefined : formData.issueId
+      };
       await createFeedback(feedbackData);
-      setFormData({ message: '', category: 'general', rating: 5 });
+      setFormData({ message: '', category: 'general', rating: 5, issueId: 'none' });
       toast.success("Feedback submitted successfully!");
       fetchFeedbacks();
     } catch (error) {
-      const errorMessage = error.response?.data?.message || 'Failed to submit feedback. Please try again.';
+      const errorMessage = error?.response?.data?.message || 'Failed to submit feedback. Please try again.';
       setErrors({ general: errorMessage });
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleLike = async (id) => {
+    try {
+      // Optimistic update
+      setFeedbacks(prev => prev.map(f => {
+        if (f._id === id) {
+          const hasLiked = f.likes?.includes(user?._id);
+          let newLikes = f.likes || [];
+          let newDislikes = f.dislikes || [];
+          
+          if (hasLiked) {
+            newLikes = newLikes.filter(uid => uid !== user?._id);
+          } else {
+            newLikes = [...newLikes, user?._id];
+            newDislikes = newDislikes.filter(uid => uid !== user?._id);
+          }
+          return { ...f, likes: newLikes, dislikes: newDislikes };
+        }
+        return f;
+      }));
+      await likeFeedback(id);
+      fetchFeedbacks(); // sync
+    } catch (error) {
+      toast.error("Failed to like feedback");
+      fetchFeedbacks(); // revert
+    }
+  };
+
+  const handleDislike = async (id) => {
+    try {
+      // Optimistic update
+      setFeedbacks(prev => prev.map(f => {
+        if (f._id === id) {
+          const hasDisliked = f.dislikes?.includes(user?._id);
+          let newLikes = f.likes || [];
+          let newDislikes = f.dislikes || [];
+          
+          if (hasDisliked) {
+            newDislikes = newDislikes.filter(uid => uid !== user?._id);
+          } else {
+            newDislikes = [...newDislikes, user?._id];
+            newLikes = newLikes.filter(uid => uid !== user?._id);
+          }
+          return { ...f, likes: newLikes, dislikes: newDislikes };
+        }
+        return f;
+      }));
+      await dislikeFeedback(id);
+      fetchFeedbacks(); // sync
+    } catch (error) {
+      toast.error("Failed to dislike feedback");
+      fetchFeedbacks(); // revert
+    }
+  };
+
+  const handleStar = async (id) => {
+    try {
+      // Optimistic update
+      setFeedbacks(prev => prev.map(f => f._id === id ? { ...f, isStarred: !f.isStarred } : f));
+      await starFeedback(id);
+      toast.success("Feedback star updated");
+      fetchFeedbacks();
+    } catch (error) {
+      toast.error("Failed to star feedback");
+      fetchFeedbacks(); // revert
     }
   };
 
@@ -100,7 +190,7 @@ const Feedback = () => {
             disabled={!interactive}
             className={`transition-transform flex items-center justify-center p-1 ${interactive ? 'cursor-pointer hover:scale-110 active:scale-95' : 'cursor-default'}`}
           >
-            <Star
+            <StarIcon
               className={`w-6 h-6 ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground/30'}`}
               strokeWidth={star <= rating ? 0 : 2}
             />
@@ -120,8 +210,8 @@ const Feedback = () => {
               <MessageSquare className="w-8 h-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold font-display tracking-tight">Feedback</h1>
-              <p className="text-teal-100 font-medium mt-1">Share your experience and help us improve our services.</p>
+              <h1 className="text-3xl font-bold font-display tracking-tight">Feedback Board</h1>
+              <p className="text-teal-100 font-medium mt-1">Share your experience, review others, and help us improve.</p>
             </div>
           </div>
         </div>
@@ -150,6 +240,23 @@ const Feedback = () => {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  {user?.role === 'citizen' && myIssues.length > 0 && (
+                    <div className="space-y-2">
+                      <Label>Link to Issue (Optional)</Label>
+                      <Select value={formData.issueId} onValueChange={handleIssueSelectChange}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select an issue to link" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">General Feedback (None)</SelectItem>
+                          {myIssues.map(issue => (
+                            <SelectItem key={issue._id} value={issue._id}>{issue.title}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label>Rating</Label>
@@ -184,7 +291,7 @@ const Feedback = () => {
           <div className="lg:col-span-2">
             <Card className="border-border shadow-sm p-6 md:p-8 bg-card h-full">
               <div className="mb-6 pb-4 border-b flex items-center justify-between">
-                <h2 className="text-2xl font-bold font-display">Recent Feedback</h2>
+                <h2 className="text-2xl font-bold font-display">Global Feedback Board</h2>
                 <div className="bg-primary/10 text-primary font-bold px-3 py-1 rounded-full text-sm">
                   {feedbacks.length} Total
                 </div>
@@ -193,15 +300,27 @@ const Feedback = () => {
               {feedbacks.length > 0 ? (
                 <div className="space-y-6">
                   {feedbacks.map((feedback) => (
-                    <div key={feedback._id} className="border border-border/50 bg-muted/20 p-5 rounded-2xl hover:bg-muted/40 transition-colors group">
+                    <div key={feedback._id} className={`border ${feedback.isStarred ? 'border-yellow-400 bg-yellow-50/20' : 'border-border/50 bg-muted/10'} p-5 rounded-2xl hover:bg-muted/40 transition-colors group relative`}>
+                      {feedback.isStarred && (
+                        <div className="absolute -top-3 -right-3 bg-yellow-400 text-yellow-900 p-1.5 rounded-full shadow-lg">
+                          <StarIcon className="w-5 h-5 fill-yellow-900" />
+                        </div>
+                      )}
+                      
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-3">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-primary/20 text-primary font-bold rounded-full flex items-center justify-center">
-                            {feedback.userName?.charAt(0).toUpperCase()}
+                            {feedback.user?.name?.charAt(0).toUpperCase() || feedback.userName?.charAt(0).toUpperCase() || '?'}
                           </div>
                           <div>
-                            <h4 className="font-bold text-foreground leading-none">{feedback.userName}</h4>
+                            <h4 className="font-bold text-foreground leading-none">{feedback.user?.name || feedback.userName || 'Anonymous'}</h4>
                             <p className="text-xs font-medium text-muted-foreground mt-1">{formatDate(feedback.createdAt)}</p>
+                            
+                            {feedback.issue && (
+                              <div className="mt-2 inline-flex items-center text-xs text-muted-foreground bg-primary/5 px-2 py-1 rounded border border-primary/10">
+                                <span className="font-semibold mr-1">Linked Issue:</span> {feedback.issue.title}
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center">
@@ -215,9 +334,29 @@ const Feedback = () => {
                         {renderStars(feedback.rating)}
                       </div>
                       
-                      <p className="text-foreground/90 leading-relaxed text-sm sm:pl-13 bg-background/50 p-3 rounded-lg border border-border/50 group-hover:border-border transition-colors">
+                      <p className="text-foreground/90 leading-relaxed text-sm sm:pl-13 p-3 rounded-lg border border-transparent">
                         "{feedback.message}"
                       </p>
+                      
+                      <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border/30 sm:pl-13">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => handleLike(feedback._id)} className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${feedback.likes?.includes(user?._id) ? 'text-blue-500' : 'text-muted-foreground hover:text-blue-500'}`}>
+                            <ThumbsUp className={`w-4 h-4 ${feedback.likes?.includes(user?._id) ? 'fill-blue-500' : ''}`} />
+                            <span>{feedback.likes?.length || 0}</span>
+                          </button>
+                          <button onClick={() => handleDislike(feedback._id)} className={`flex items-center gap-1.5 text-sm font-medium transition-colors ${feedback.dislikes?.includes(user?._id) ? 'text-red-500' : 'text-muted-foreground hover:text-red-500'}`}>
+                            <ThumbsDown className={`w-4 h-4 ${feedback.dislikes?.includes(user?._id) ? 'fill-red-500' : ''}`} />
+                            <span>{feedback.dislikes?.length || 0}</span>
+                          </button>
+                        </div>
+                        
+                        {(user?.role === 'admin' || user?.role === 'manager') && (
+                          <button onClick={() => handleStar(feedback._id)} className={`ml-auto flex items-center gap-1.5 text-sm font-medium transition-colors ${feedback.isStarred ? 'text-yellow-600' : 'text-muted-foreground hover:text-yellow-600'}`}>
+                            <StarIcon className={`w-4 h-4 ${feedback.isStarred ? 'fill-yellow-500' : ''}`} />
+                            <span>{feedback.isStarred ? 'Starred' : 'Star'}</span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>

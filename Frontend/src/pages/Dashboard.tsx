@@ -106,7 +106,6 @@ const Dashboard = () => {
     const recent = getRecentIssues();
     switch (user?.role) {
       case 'citizen': return <CitizenDashboard issues={recent} stats={stats} userRole={user?.role} />;
-      case 'authority': return <AuthorityDashboard issues={recent} stats={stats} onStatusUpdate={handleStatusUpdate} />;
       case 'manager': return <ManagerDashboard issues={recent} stats={stats} onStatusUpdate={handleStatusUpdate} currentUserId={user?._id} />;
       case 'admin': return <AdminDashboard issues={recent} stats={stats} onStatusUpdate={handleStatusUpdate} />;
       default: return <div>Invalid user role</div>;
@@ -127,32 +126,31 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background pb-12">
       {/* Header section with gradient */}
-      <div className="bg-gradient-amber text-white pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-4">
+      <div className="bg-gradient-amber text-slate-900 border-b shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold font-display mb-2 drop-shadow-sm">
+              <h1 className="text-3xl md:text-4xl font-bold font-display mb-2 drop-shadow-sm text-slate-900">
                 Welcome back, {user?.name}!
               </h1>
-              <p className="text-white/90 text-lg">
+              <p className="text-slate-300 text-slate-300">
                 {user?.role === 'citizen' && 'Track and manage your civic issues'}
-                {user?.role === 'authority' && 'Review and resolve civic issues'}
-                {user?.role === 'manager' && 'Handle and resolve community issues'}
+                {user?.role === 'manager' && 'Manage and resolve community issues'}
                 {user?.role === 'admin' && 'Manage the entire system'}
               </p>
             </div>
             <div className="text-left md:text-right">
-              <div className="text-sm text-white/80 mb-1">Current Role</div>
-              <div className="inline-flex items-center px-4 py-2 bg-black/20 backdrop-blur-md rounded-lg border border-white/20">
-                <span className="font-bold tracking-wide uppercase text-sm">{user?.role}</span>
+              <div className="text-sm text-slate-700 mb-1">Current Role</div>
+              <div className="inline-flex items-center px-4 py-2 bg-white/20 backdrop-blur-md rounded-lg border border-slate-900/10">
+                <span className="font-bold tracking-wide uppercase text-sm text-slate-900">{user?.role}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content (overlapping the header slightly) */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {getDashboardContent()}
       </div>
     </div>
@@ -228,14 +226,14 @@ const ManagerDashboard = ({ issues, stats, onStatusUpdate, currentUserId }) => {
     <div className="space-y-8 animate-fade-in">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-foreground font-sans">
         <StatCard title="Total Issues" value={stats.total} icon={<BarChart className="w-6 h-6 text-primary" />} />
-        <StatCard title="Open" value={stats.open} icon={<Activity className="w-6 h-6 text-red-500" />} />
+        <StatCard title="Pending" value={stats.open} icon={<Clock className="w-6 h-6 text-red-500" />} />
         <StatCard title="My Pending Requests" value={myPendingRequests} icon={<Clock className="w-6 h-6 text-orange-500" />} />
         <StatCard title="Ready to Resolve" value={myApprovedRequests} icon={<ShieldCheck className="w-6 h-6 text-green-500" />} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <ActionCard title="Browse All Issues" description="View and manage all community issues" icon={<LayoutList className="w-8 h-8 text-primary" />} to="/track-issues" />
-        <ActionCard title="Give Feedback" description="Share your experience with the platform" icon={<MessageSquare className="w-8 h-8 text-green-600" />} to="/feedback" />
+        <ActionCard title="Give Feedback" description="Share your experience" icon={<MessageSquare className="w-8 h-8 text-green-600" />} to="/feedback" />
       </div>
 
       <div className="bg-card rounded-2xl shadow-card border border-border p-6 md:p-8">
@@ -244,7 +242,7 @@ const ManagerDashboard = ({ issues, stats, onStatusUpdate, currentUserId }) => {
             <h2 className="text-2xl font-bold font-display flex items-center gap-2">
               <Briefcase className="w-6 h-6 text-primary" /> Issues to Handle
             </h2>
-            <p className="text-sm text-muted-foreground mt-1">Request to resolve open community issues</p>
+            <p className="text-sm text-muted-foreground mt-1">Review and manage community issues</p>
           </div>
           <Button asChild variant="ghost" className="text-primary hover:text-primary/80 font-semibold gap-1">
             <Link to="/track-issues">View All <span aria-hidden="true">→</span></Link>
@@ -258,55 +256,14 @@ const ManagerDashboard = ({ issues, stats, onStatusUpdate, currentUserId }) => {
             ))}
           </div>
         ) : (
-          <EmptyState title="No Issues Available" description="No civic issues are available for you to handle right now." actionText="Browse All Issues" actionTo="/track-issues" />
+          <EmptyState title="No Issues Available" description="No civic issues are available right now." actionText="Browse All Issues" actionTo="/track-issues" />
         )}
       </div>
     </div>
   );
 };
 
-// Authority Dashboard
-const AuthorityDashboard = ({ issues, stats, onStatusUpdate }) => {
-  const safeIssues = Array.isArray(issues) ? issues : [];
-  
-  return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-foreground font-sans">
-        <StatCard title="Total Issues" value={stats.total} icon={<BarChart className="w-6 h-6 text-primary" />} />
-        <StatCard title="Pending" value={stats.open} icon={<Clock className="w-6 h-6 text-red-500" />} />
-        <StatCard title="In Progress" value={stats.inProgress} icon={<Loader2 className="w-6 h-6 text-blue-500 animate-spin-slow" />} />
-        <StatCard title="Resolved" value={stats.resolved} icon={<CheckCircle className="w-6 h-6 text-green-500" />} />
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <ActionCard title="View All Issues" description="Manage all reported civic issues" icon={<LayoutList className="w-8 h-8 text-primary" />} to="/track-issues" />
-         <ActionCard title="Analytics" description="View detailed analytics and reports" icon={<BarChart className="w-8 h-8 text-secondary-foreground" />} to="/analytics" />
-      </div>
-
-      <div className="bg-card rounded-2xl shadow-card border border-border p-6 md:p-8">
-        <div className="flex justify-between items-end mb-6 border-b pb-4">
-          <div>
-            <h2 className="text-2xl font-bold font-display">Recent Issues</h2>
-            <p className="text-sm text-muted-foreground mt-1">Issues requiring attention</p>
-          </div>
-          <Button asChild variant="ghost" className="text-primary hover:text-primary/80 font-semibold gap-1">
-            <Link to="/track-issues">Manage All <span aria-hidden="true">→</span></Link>
-          </Button>
-        </div>
-        
-        {safeIssues.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {safeIssues.map((issue) => (
-              <IssueCard key={issue._id} issue={issue} userRole="authority" onStatusUpdate={onStatusUpdate} />
-            ))}
-          </div>
-        ) : (
-          <EmptyState title="No issues reported" description="No civic issues have been reported yet" />
-        )}
-      </div>
-    </div>
-  );
-};
 
 // Admin Dashboard
 const AdminDashboard = ({ issues, stats, onStatusUpdate }) => {

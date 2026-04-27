@@ -172,6 +172,21 @@ const IssueCard = ({ issue, onStatusUpdate, userRole, showActions = true, curren
         {/* MANAGER ACTIONS */}
         {showActions && userRole === 'manager' && localIssue.status !== 'resolved' && (
           <div className="mt-2 pt-3 border-t space-y-2">
+            {/* Direct Status Controls (Previously Authority) */}
+            <div className="flex items-center gap-2 mb-2">
+              {localIssue.status === 'open' && (
+                <Button size="sm" variant="outline" className="w-full h-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50" onClick={() => handleStatusChange('in-progress')}>
+                  <Activity className="w-3.5 h-3.5 mr-1.5" /> Start Work
+                </Button>
+              )}
+              {localIssue.status === 'in-progress' && (
+                <div className="text-xs font-bold text-indigo-600 bg-indigo-50/50 px-2 py-1 rounded border border-indigo-100 flex items-center gap-1.5 w-full justify-center">
+                  <Activity className="w-3 h-3 animate-pulse" /> Issue is in progress
+                </div>
+              )}
+            </div>
+
+            {/* Resolve Request Logic (Specific to Manager/Community flow) */}
             {!myRequest && (
               <Button
                 size="sm"
@@ -225,22 +240,7 @@ const IssueCard = ({ issue, onStatusUpdate, userRole, showActions = true, curren
           </div>
         )}
 
-        {/* AUTHORITY ACTIONS */}
-        {showActions && userRole === 'authority' && localIssue.status !== 'resolved' && (
-          <div className="flex items-center gap-2 mt-2 pt-3 border-t">
-            {localIssue.status === 'open' && (
-              <Button size="sm" className="w-full h-8" onClick={() => handleStatusChange('in-progress')}>
-                Start Work
-              </Button>
-            )}
-            {localIssue.status === 'in-progress' && (
-              <Button size="sm" className="w-full h-8 bg-green-600 hover:bg-green-700 text-white" onClick={() => handleStatusChange('resolved')}>
-                <CheckCircle className="w-3.5 h-3.5 mr-1.5" />
-                Mark Resolved
-              </Button>
-            )}
-          </div>
-        )}
+
 
         {/* ADMIN ACTIONS */}
         {showActions && userRole === 'admin' && (

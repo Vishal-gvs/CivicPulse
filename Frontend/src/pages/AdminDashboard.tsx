@@ -5,10 +5,7 @@ import {
   getUsers,
   getIssues,
   getAnalytics,
-  getPendingAuthorities,
   getPendingManagers,
-  approveAuthority,
-  rejectAuthority,
   approveManager,
   rejectManager,
   getPendingResolveRequests,
@@ -16,7 +13,6 @@ import {
   rejectResolveRequest,
   parseIssuesFromResponse,
   parseUsersListResponse,
-  parsePendingAuthoritiesResponse,
   parsePendingManagersResponse,
   parsePendingResolveRequestsResponse,
   parseAnalyticsResponse
@@ -33,7 +29,6 @@ const AdminDashboard = () => {
   const [users, setUsers] = useState([]);
   const [issues, setIssues] = useState([]);
   const [, setAnalytics] = useState(null);
-  const [pendingAuthorities, setPendingAuthorities] = useState([]);
   const [pendingManagers, setPendingManagers] = useState([]);
   const [pendingResolveRequests, setPendingResolveRequests] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -47,14 +42,13 @@ const AdminDashboard = () => {
       setLoading(false); return;
     }
     try {
-      const [usersRes, issuesRes, analyticsRes, pendingRes, managersRes, resolveReqRes] = await Promise.all([
+      const [usersRes, issuesRes, analyticsRes, managersRes, resolveReqRes] = await Promise.all([
         getUsers(), getIssues(user._id, user.role), getAnalytics(user._id, user.role),
-        getPendingAuthorities(), getPendingManagers(), getPendingResolveRequests()
+        getPendingManagers(), getPendingResolveRequests()
       ]);
       setUsers(parseUsersListResponse(usersRes));
       setIssues(parseIssuesFromResponse(issuesRes));
       setAnalytics(parseAnalyticsResponse(analyticsRes));
-      setPendingAuthorities(parsePendingAuthoritiesResponse(pendingRes));
       setPendingManagers(parsePendingManagersResponse(managersRes));
       setPendingResolveRequests(parsePendingResolveRequestsResponse(resolveReqRes));
     } catch (error) {
@@ -65,29 +59,7 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleApproveAuthority = async (userId) => {
-    try {
-      await approveAuthority(userId);
-      setPendingAuthorities(prev => prev.filter(auth => auth._id !== userId));
-      setUsers(prev => prev.map(u => u._id === userId ? { ...u, status: 'active' } : u));
-      toast.success("Authority approved successfully.");
-    } catch (error) {
-      console.error('Failed to approve authority:', error);
-      toast.error("Failed to approve authority.");
-    }
-  };
 
-  const handleRejectAuthority = async (userId) => {
-    try {
-      await rejectAuthority(userId);
-      setPendingAuthorities(prev => prev.filter(auth => auth._id !== userId));
-      setUsers(prev => prev.map(u => u._id === userId ? { ...u, status: 'rejected' } : u));
-      toast.success("Authority rejected.");
-    } catch (error) {
-      console.error('Failed to reject authority:', error);
-      toast.error("Failed to reject authority.");
-    }
-  };
 
   const handleApproveManager = async (userId) => {
     try {
@@ -136,7 +108,6 @@ const AdminDashboard = () => {
     return { 
       total: users.length, 
       citizens: stats.citizen || 0, 
-      authorities: stats.authority || 0, 
       managers: stats.manager || 0,
       admins: stats.admin || 0 
     };
@@ -185,8 +156,8 @@ const AdminDashboard = () => {
                  <ShieldCheck className="h-8 w-8" />
                </div>
                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold font-display leading-tight">Admin Dashboard</h1>
-                  <p className="text-slate-400 font-medium">System administration and global analytics</p>
+                  <h1 className="text-3xl md:text-4xl font-bold font-display leading-tight text-slate-300">Admin Dashboard</h1>
+                  <p className="text-slate-300 font-medium">System administration and global analytics</p>
                </div>
             </div>
             
@@ -204,18 +175,14 @@ const AdminDashboard = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <Tabs defaultValue="overview" className="space-y-6">
           <div className="bg-card px-2 py-2 rounded-xl shadow-sm border border-border inline-block min-w-full md:min-w-0 overflow-x-auto">
             <TabsList className="bg-transparent h-auto p-0 flex flex-nowrap w-max">
               <TabsTrigger value="overview" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-5 py-2.5 rounded-lg flex gap-2"><LayoutDashboard className="h-4 w-4" /> Overview</TabsTrigger>
               <TabsTrigger value="users" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-5 py-2.5 rounded-lg flex gap-2"><UsersIcon className="h-4 w-4" /> Users</TabsTrigger>
               <TabsTrigger value="approvals" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-5 py-2.5 rounded-lg flex gap-2 relative">
-                <ShieldCheck className="h-4 w-4" /> Approvals
-                {pendingAuthorities.length > 0 && <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-destructive animate-pulse"></span>}
-              </TabsTrigger>
-              <TabsTrigger value="managers" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-5 py-2.5 rounded-lg flex gap-2 relative">
-                <Briefcase className="h-4 w-4" /> Managers
+                <Briefcase className="h-4 w-4" /> Approvals
                 {pendingManagers.length > 0 && <span className="absolute top-1 right-2 w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>}
               </TabsTrigger>
               <TabsTrigger value="resolve-requests" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary px-5 py-2.5 rounded-lg flex gap-2 relative">
@@ -271,13 +238,7 @@ const AdminDashboard = () => {
                     </div>
                     <span className="font-mono font-bold text-2xl text-blue-700 dark:text-blue-400">{userStats.citizens}</span>
                   </div>
-                  <div className="flex justify-between items-center bg-orange-50/50 p-4 rounded-xl border border-orange-100 dark:bg-orange-900/10 dark:border-orange-900/30 group hover:bg-orange-50 transition-colors">
-                    <div className="flex items-center gap-3">
-                      <div className="w-2.5 h-2.5 bg-orange-500 rounded-full shadow-[0_0_8px_rgba(249,115,22,0.5)]" />
-                      <span className="font-bold text-sm tracking-tight text-slate-700 dark:text-slate-300">Authorities</span>
-                    </div>
-                    <span className="font-mono font-bold text-2xl text-orange-700 dark:text-orange-400">{userStats.authorities}</span>
-                  </div>
+
                   <div className="flex justify-between items-center bg-indigo-50/50 p-4 rounded-xl border border-indigo-100 dark:bg-indigo-900/10 dark:border-indigo-900/30 group hover:bg-indigo-50 transition-colors">
                     <div className="flex items-center gap-3">
                       <div className="w-2.5 h-2.5 bg-indigo-600 rounded-full shadow-[0_0_8px_rgba(79,70,229,0.5)]" />
@@ -318,57 +279,10 @@ const AdminDashboard = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="approvals" className="animate-fade-in outline-none">
-             <Card>
-               <CardHeader className="border-b bg-muted/20">
-                 <CardTitle>Pending Authorities</CardTitle>
-                 <CardDescription>Review and approve new authority registrations.</CardDescription>
-               </CardHeader>
-               <CardContent className="p-0">
-                 {pendingAuthorities.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
-                        <CheckCircle className="h-8 w-8 text-muted-foreground/50" />
-                      </div>
-                      <p className="font-semibold text-muted-foreground">All caught up! No pending approvals.</p>
-                    </div>
-                 ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left border-collapse">
-                        <thead>
-                          <tr className="bg-muted/50 border-b text-muted-foreground text-xs uppercase font-bold tracking-wider">
-                            <th className="p-4 rounded-tl-lg">Name</th>
-                            <th className="p-4">Email</th>
-                            <th className="p-4">Date</th>
-                            <th className="p-4 rounded-tr-lg text-right">Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border/50">
-                          {pendingAuthorities.map(auth => (
-                            <tr key={auth._id} className="hover:bg-muted/30 transition-colors">
-                               <td className="p-4 font-semibold text-foreground">{auth.name}</td>
-                               <td className="p-4 text-muted-foreground text-sm">{auth.email}</td>
-                               <td className="p-4 text-muted-foreground text-sm">{new Date(auth.createdAt).toLocaleDateString()}</td>
-                               <td className="p-4 text-right space-x-2">
-                                  <Button size="sm" variant="outline" className="text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200 gap-1" onClick={() => handleApproveAuthority(auth._id)}>
-                                    <CheckCircle className="h-4 w-4" /> Approve
-                                  </Button>
-                                  <Button size="sm" variant="outline" className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 gap-1" onClick={() => handleRejectAuthority(auth._id)}>
-                                    <XCircle className="h-4 w-4" /> Reject
-                                  </Button>
-                               </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                 )}
-               </CardContent>
-             </Card>
-          </TabsContent>
+
 
           {/* Managers Approval Tab */}
-          <TabsContent value="managers" className="animate-fade-in outline-none">
+          <TabsContent value="approvals" className="animate-fade-in outline-none">
             <Card>
               <CardHeader className="border-b bg-muted/20">
                 <CardTitle>Pending Managers</CardTitle>
@@ -508,7 +422,7 @@ const AdminDashboard = () => {
                               </td>
                               <td className="p-4 text-muted-foreground text-sm">{u.email}</td>
                               <td className="p-4">
-                                <Badge variant={u.role === 'admin' ? "destructive" : u.role === 'authority' ? "default" : "secondary"} className="uppercase text-[10px] tracking-wider">
+                                <Badge variant={u.role === 'admin' ? "destructive" : "secondary"} className="uppercase text-[10px] tracking-wider">
                                   {u.role}
                                 </Badge>
                               </td>

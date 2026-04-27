@@ -78,12 +78,14 @@ export default function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
       {showSplash ? (
-        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gradient-amber transition-opacity duration-500">
+        <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background transition-opacity duration-500">
           <div className="flex flex-col items-center gap-6 animate-pulse">
             <div className="w-24 h-24 sm:w-32 sm:h-32">
-              <img src="/CivicPulse.png" alt="CivicPulse Logo" className="w-full h-full object-contain brightness-0 invert" />
+              <img src="/CivicPulse.png" alt="CivicPulse Logo" className="w-full h-full object-contain" />
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold font-display tracking-tight text-white">CivicPulse</h1>
+            <h1 className="text-4xl md:text-6xl font-bold font-display tracking-tight text-foreground">
+              Civic<span className="text-primary">Pulse</span>
+            </h1>
           </div>
         </div>
       ) : (

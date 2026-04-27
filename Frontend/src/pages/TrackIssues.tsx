@@ -115,41 +115,41 @@ const TrackIssues = () => {
   return (
     <div className="min-h-screen bg-muted/20 pb-12">
       {/* Header */}
-      <div className="bg-gradient-amber text-white border-b shadow-sm">
+      <div className="bg-gradient-amber text-slate-900 border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-14">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-8">
             <div>
-              <h1 className="text-3xl md:text-4xl font-bold font-display mb-2 drop-shadow-sm flex items-center gap-3">
+              <h1 className="text-3xl md:text-4xl font-bold font-display mb-2 drop-shadow-sm flex items-center gap-3 text-slate-900">
                 <Compass className="w-8 h-8 opacity-80" /> Track Issues
               </h1>
-              <p className="text-white/90 text-lg max-w-xl">
+              <p className="text-slate-300 text-lg max-w-xl">
                 {user?.role === 'citizen' && 'Monitor the progress of your reported issues and discover others in your community.'}
-                {user?.role === 'authority' && 'Manage and resolve civic issues systematically.'}
+                {user?.role === 'manager' && 'Manage and resolve civic issues systematically.'}
                 {user?.role === 'admin' && 'Oversee all civic requests and maintain system integrity.'}
               </p>
             </div>
             
-            <div className="flex gap-4 md:gap-8 bg-black/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 shadow-lg">
+            <div className="flex gap-4 md:gap-8 bg-white/20 backdrop-blur-md rounded-2xl p-5 border border-slate-900/10 shadow-lg text-slate-900">
               <div className="text-center px-1">
                 <div className="text-3xl font-bold font-sans tracking-tight leading-none">{stats.total}</div>
-                <div className="text-[10px] text-white/70 uppercase font-bold tracking-widest mt-2">Total Cases</div>
+                <div className="text-[10px] text-slate-700 uppercase font-bold tracking-widest mt-2">Total Cases</div>
               </div>
-              <div className="w-px bg-white/10"></div>
+              <div className="w-px bg-slate-900/10"></div>
               <div className="text-center px-1">
-                <div className="text-3xl font-bold font-sans tracking-tight leading-none text-amber-300">{stats.open}</div>
-                <div className="text-[10px] text-white/70 uppercase font-bold tracking-widest mt-2">Open</div>
+                <div className="text-3xl font-bold font-sans tracking-tight leading-none text-slate-800">{stats.open}</div>
+                <div className="text-[10px] text-slate-700 uppercase font-bold tracking-widest mt-2">Open</div>
               </div>
-              <div className="w-px bg-white/10"></div>
+              <div className="w-px bg-slate-900/10"></div>
               <div className="text-center px-1">
-                <div className="text-3xl font-bold font-sans tracking-tight leading-none text-blue-300">{stats.inProgress}</div>
-                <div className="text-[10px] text-white/70 uppercase font-bold tracking-widest mt-2">Active</div>
+                <div className="text-3xl font-bold font-sans tracking-tight leading-none text-slate-800">{stats.inProgress}</div>
+                <div className="text-[10px] text-slate-700 uppercase font-bold tracking-widest mt-2">Active</div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         {/* Filters */}
         <Card className="p-5 md:p-7 mb-10 border-border/40 shadow-premium bg-card/80 backdrop-blur-xl rounded-2xl">
           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">

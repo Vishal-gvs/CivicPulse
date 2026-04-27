@@ -170,16 +170,8 @@ const Register = () => {
                     <RadioGroupItem value="manager" id="r2" className="mt-1" />
                     <Label htmlFor="r2" className="font-normal cursor-pointer flex-1">
                       <span className="block font-medium">Manager</span>
-                      <span className="text-xs text-muted-foreground">Handle and resolve citizen issues (requires admin approval)</span>
-                      <span className="block text-xs text-blue-600 mt-1">🛡️ Requires @manager.com</span>
-                    </Label>
-                  </div>
-                  <div className="flex items-start space-x-3 bg-muted/20 p-3 rounded-lg border">
-                    <RadioGroupItem value="authority" id="r3" className="mt-1" />
-                    <Label htmlFor="r3" className="font-normal cursor-pointer flex-1">
-                      <span className="block font-medium">Authority</span>
-                      <span className="text-xs text-muted-foreground">Manage and resolve issues (government official)</span>
-                      <span className="block text-xs text-orange-600 mt-1">⚠️ Requires @gov.in</span>
+                      <span className="text-xs text-muted-foreground">Manage and resolve civic issues (requires admin approval)</span>
+                      <span className="block text-xs text-blue-600 mt-1">🛡️ Requires @manager.com or @gov.in</span>
                     </Label>
                   </div>
                   <div className="flex items-start space-x-3 bg-purple-50 border-purple-200 border p-3 rounded-lg dark:bg-purple-950/20">

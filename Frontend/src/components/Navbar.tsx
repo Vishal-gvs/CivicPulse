@@ -26,12 +26,12 @@ const Navbar = () => {
     { path: '/report-issue', label: 'Report Issue', show: isAuthenticated && user?.role === 'citizen' },
     { path: '/track-issues', label: 'Track Issues', show: isAuthenticated },
     { path: '/feedback', label: 'Feedback', show: isAuthenticated },
-    { path: '/analytics', label: 'Analytics', show: isAuthenticated },
+    { path: '/analytics', label: 'Analytics', show: isAuthenticated && user?.role === 'admin' },
     { path: '/admin', label: 'Admin Panel', show: isAuthenticated && user?.role === 'admin' },
   ];
 
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-border bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
