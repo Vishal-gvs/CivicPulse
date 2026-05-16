@@ -1,7 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 
 // Check if we should use mock API
-const USE_MOCK_API = false; // ✅ Switch to real backend
+const USE_MOCK_API = false; // Switch to real backend
 
 const API = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "/api", // Use env var in production, rely on Vite proxy locally
